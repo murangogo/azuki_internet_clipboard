@@ -27,6 +27,8 @@ export default function ClipboardPage({ params }: { params: { key: string } }) {
 
       setLoading(false);  // 加载完毕
     };
+
+    fetchClipboard();
   }, [key]);
 
   const handleSave = async () => {
