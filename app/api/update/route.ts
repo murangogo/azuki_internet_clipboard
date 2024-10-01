@@ -1,6 +1,6 @@
 // app/api/update/route.ts
 import { NextResponse } from 'next/server';
-import pool from './dbconnect';
+import pool from '../../lib/pgconnect';
 
 export async function POST(request: Request) {
   const { key, content } = await request.json();

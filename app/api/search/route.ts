@@ -1,6 +1,6 @@
 // app/api/search/route.ts
 import { NextResponse } from 'next/server';
-import pool from './dbconnect';
+import pool from '../../lib/pgconnect';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
