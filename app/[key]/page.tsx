@@ -3,13 +3,17 @@
 
 import { useState, useEffect } from 'react';
 import styles from './ClipboardPage.module.css'; // 引入 CSS 模块
-import Head from 'next/head'; // 导入 Head 组件
 
 export default function ClipboardPage({ params }: { params: { key: string } }) {
   const [content, setContent] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
   const [message, setMessage] = useState<string>(''); // 新增状态
   const { key } = params;
+
+  // 手动更新标题
+  useEffect(() => {
+      document.title = `${key} - Azuki的剪贴板`;
+    }, [key]);
 
   useEffect(() => {
     // 当组件挂载时，检查数据库是否有该 key
@@ -19,6 +23,8 @@ export default function ClipboardPage({ params }: { params: { key: string } }) {
 
       if (res.ok && data.content) {
         setContent(data.content);  // 数据库中有内容，设置为内容
+      } else if (res.ok && !data.content){
+        setContent('');  // 数据库中有条目，无内容
       } else {
         // 数据库中没有，创建一个空条目
         await fetch('/api/create', {
@@ -58,20 +64,11 @@ export default function ClipboardPage({ params }: { params: { key: string } }) {
   };
 
   if (loading) {
-    return (
-      <div className={styles.container}>
-        <Head>
-          <title>{key} - Azuki的剪贴板</title>
-        </Head>
-      </div>
-    );
+    return <p>加载中...</p>;
   }
 
   return (
     <div className={styles.container}>
-      <Head>
-        <title>{key} - Azuki的剪贴板</title>
-      </Head>
       <h1 className={styles.title}>剪贴板 - {key}</h1>
       <textarea
         className={styles.textarea}

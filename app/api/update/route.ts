@@ -23,6 +23,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
   } catch (error) {
+    console.error('Update Error.'); // 打印错误信息到控制台
     console.error(error); // 打印错误信息到控制台
     return NextResponse.json({ error: 'Database error' }, { status: 500 });
   }

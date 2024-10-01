@@ -19,6 +19,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(result.rows[0]);
   } catch (error) {
+    console.error('Create Error.'); // 打印错误信息到控制台
     console.error(error); // 打印错误信息到控制台
     return NextResponse.json({ error: 'Database error' }, { status: 500 });
   }
