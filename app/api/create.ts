@@ -1,6 +1,6 @@
-// app/api/update/route.ts
+// app/api/create/route.ts
 import { NextResponse } from 'next/server';
-import pool from '@/lib/pg';
+import pool from './dbconnect';
 
 export async function POST(request: Request) {
   const { key, content } = await request.json();
@@ -12,17 +12,14 @@ export async function POST(request: Request) {
   try {
     const client = await pool.connect();
     const result = await client.query(
-      'UPDATE clipboard SET content = $1 WHERE namekey = $2 RETURNING *',
-      [content, key]
+      'INSERT INTO clipboard (namekey, content) VALUES ($1, $2) RETURNING *',
+      [key, content]
     );
     client.release();
 
-    if (result.rows.length > 0) {
-      return NextResponse.json(result.rows[0]);
-    } else {
-      return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    }
+    return NextResponse.json(result.rows[0]);
   } catch (error) {
+    console.error(error); // 打印错误信息到控制台
     return NextResponse.json({ error: 'Database error' }, { status: 500 });
   }
 }

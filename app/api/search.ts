@@ -1,6 +1,6 @@
 // app/api/search/route.ts
 import { NextResponse } from 'next/server';
-import pool from '@/lib/pg';
+import pool from './dbconnect';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -22,6 +22,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
   } catch (error) {
+    console.error(error); // 打印错误信息到控制台
     return NextResponse.json({ error: 'Database error' }, { status: 500 });
   }
 }
