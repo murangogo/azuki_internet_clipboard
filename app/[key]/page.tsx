@@ -2,10 +2,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import styles from './ClipboardPage.module.css'; // 引入 CSS 模块
+import Head from 'next/head'; // 导入 Head 组件
 
 export default function ClipboardPage({ params }: { params: { key: string } }) {
   const [content, setContent] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
+  const [message, setMessage] = useState<string>(''); // 新增状态
   const { key } = params;
 
   useEffect(() => {
@@ -32,15 +35,18 @@ export default function ClipboardPage({ params }: { params: { key: string } }) {
   }, [key]);
 
   const handleSave = async () => {
+    setMessage('正在保存......'); // 设置保存成功消息
     // 保存当前内容
     await fetch('/api/update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ key, content })
     });
+    setMessage('保存成功！'); // 设置保存成功消息
   };
 
   const handleClear = async () => {
+    setMessage('正在清除......'); // 设置消息
     // 清除内容
     await fetch('/api/update', {
       method: 'POST',
@@ -48,6 +54,7 @@ export default function ClipboardPage({ params }: { params: { key: string } }) {
       body: JSON.stringify({ key, content: '' })
     });
     setContent('');
+    setMessage('清除成功！'); // 设置成功消息
   };
 
   if (loading) {
@@ -55,19 +62,24 @@ export default function ClipboardPage({ params }: { params: { key: string } }) {
   }
 
   return (
-    <div style={{ textAlign: 'center', marginTop: '50px' }}>
-      <h1>剪贴板 - {key}</h1>
+    <div className={styles.container}>
+      <Head>
+        <title>{key} - Azuki的剪贴板</title>
+      </Head>
+      <h1 className={styles.title}>剪贴板 - {key}</h1>
       <textarea
+        className={styles.textarea}
         rows={10}
         cols={50}
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder="在这里输入内容"
       />
-      <div style={{ marginTop: '20px' }}>
-        <button onClick={handleSave}>保存</button>
-        <button onClick={handleClear} style={{ marginLeft: '10px' }}>清除</button>
+      <div className={styles.buttonContainer}>
+        <button className={styles.button} onClick={handleSave}>保存</button>
+        <button className={`${styles.button} ${styles.clearButton}`} onClick={handleClear}>清除</button>
       </div>
+      {message && <p style={{ marginTop: '10px', color: '#0070f3' }}>{message}</p>} {/* 显示消息 */}
     </div>
   );
 }
