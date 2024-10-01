@@ -49,6 +49,7 @@
     cursor: pointer;
     transition: background-color 0.3s;
     flex: 1; /* 使按钮在容器中平分宽度 */
+    font-weight: bold; /* 添加加粗属性 */
   }
   
   
@@ -58,6 +59,10 @@
   
   .clearButton {
     background-color: #e63946;
+  }
+
+  .copyButton {
+    background-color: #6ede9b;
   }
   
   .clearButton:hover {

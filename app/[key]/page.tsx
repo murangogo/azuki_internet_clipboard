@@ -63,6 +63,16 @@ export default function ClipboardPage({ params }: { params: { key: string } }) {
     setMessage('清除成功！'); // 设置成功消息
   };
 
+  // 复制到剪贴板
+  const handleCopy = async () => {
+    if (content) {
+      await navigator.clipboard.writeText(content); // 将内容复制到剪贴板
+      setMessage('内容已复制到剪贴板！'); // 设置复制成功消息
+    } else {
+      setMessage('没有内容可以复制。'); // 提示用户内容为空
+    }
+  };
+
   if (loading) {
     return <p>加载中...</p>;
   }
@@ -79,6 +89,7 @@ export default function ClipboardPage({ params }: { params: { key: string } }) {
         placeholder="在这里输入内容"
       />
       <div className={styles.buttonContainer}>
+        <button className={`${styles.button} ${styles.copyButton}`} onClick={handleCopy}>复制</button>
         <button className={styles.button} onClick={handleSave}>保存</button>
         <button className={`${styles.button} ${styles.clearButton}`} onClick={handleClear}>清除</button>
       </div>
