@@ -58,7 +58,13 @@ export default function ClipboardPage({ params }: { params: { key: string } }) {
   };
 
   if (loading) {
-    return <p>加载中...</p>;
+    return (
+      <div className={styles.container}>
+        <Head>
+          <title>{key} - Azuki的剪贴板</title>
+        </Head>
+      </div>
+    );
   }
 
   return (
