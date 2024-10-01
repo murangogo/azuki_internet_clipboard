@@ -69,3 +69,6 @@
     background-color: #d62839; /* 悬停时的颜色 */
   }
   
+  .copyButton:hover {
+    background-color: #5aba80;
+  }
