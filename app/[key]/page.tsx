@@ -95,7 +95,8 @@ export default function ClipboardPage({ params }: { params: { key: string } }) {
       </div>
       {message && <p style={{ marginTop: '10px', color: '#0070f3' }}>{message}</p>} {/* 显示消息 */}
       <div>
-      <p>2024 · 很多时候不懂事</p>
+      <p>2024 · 很多时候不懂事 </p>
+      <p><a href="https://github.com/murangogo/azuki_internet_clipboard">Github</a></p>
       </div>
     </div>
   );
