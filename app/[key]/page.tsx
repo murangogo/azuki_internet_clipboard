@@ -94,6 +94,9 @@ export default function ClipboardPage({ params }: { params: { key: string } }) {
         <button className={`${styles.button} ${styles.clearButton}`} onClick={handleClear}>清除</button>
       </div>
       {message && <p style={{ marginTop: '10px', color: '#0070f3' }}>{message}</p>} {/* 显示消息 */}
+      <div>
+      <p>2024 · 很多时候不懂事</p>
+      </div>
     </div>
   );
 }
