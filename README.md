@@ -2,7 +2,8 @@
 
 ## 开始使用
 
-访问链接：https://c.azuki.top/自定义字符串
+访问链接：`https://c.azuki.top/自定义字符串`
+如： [https://c.azuki.top/example](https://c.azuki.top/example)
 
 ## 技术栈
 
