@@ -10,12 +10,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    const client = await pool.connect();
-    const result = await client.query(
+    const result = await pool.query(
       'INSERT INTO clipboard (namekey, content) VALUES ($1, $2) RETURNING *',
       [key, content]
     );
-    client.release();
 
     return NextResponse.json(result.rows[0]);
   } catch (error) {

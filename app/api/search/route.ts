@@ -2,6 +2,8 @@
 import { NextResponse } from 'next/server';
 import pool from '../../lib/pgconnect';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const key = searchParams.get('key');
@@ -11,10 +13,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const client = await pool.connect();
-    const result = await client.query('SELECT content FROM clipboard WHERE namekey = $1', [key]);
-
-    client.release();
+    const result = await pool.query('SELECT content FROM clipboard WHERE namekey = $1', [key]);
 
     if (result.rows.length > 0) {
       return NextResponse.json({ content: result.rows[0].content });

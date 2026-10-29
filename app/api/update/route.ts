@@ -10,12 +10,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    const client = await pool.connect();
-    const result = await client.query(
+    const result = await pool.query(
       'UPDATE clipboard SET content = $1 WHERE namekey = $2 RETURNING *',
       [content, key]
     );
-    client.release();
 
     if (result.rows.length > 0) {
       return NextResponse.json(result.rows[0]);

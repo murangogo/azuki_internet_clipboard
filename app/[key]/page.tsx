@@ -2,13 +2,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { ClipboardRequestError, requestClipboard } from '../lib/clipboard-client';
 import styles from './ClipboardPage.module.css'; // 引入 CSS 模块
+
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : '请求失败，请稍后重试。';
+}
 
 export default function ClipboardPage({ params }: { params: { key: string } }) {
   const [content, setContent] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
-  const [message, setMessage] = useState<string>(''); // 新增状态
-  const { key } = params;
+  const [loadError, setLoadError] = useState<string>('');
+  const [retryCount, setRetryCount] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string>('');
+  // Next.js 14 传入客户端页面的动态路径参数经过 URI 编码。
+  const key = decodeURIComponent(params.key);
 
   // 手动更新标题
   useEffect(() => {
@@ -16,65 +25,96 @@ export default function ClipboardPage({ params }: { params: { key: string } }) {
     }, [key]);
 
   useEffect(() => {
-    // 当组件挂载时，检查数据库是否有该 key
+    const controller = new AbortController();
+    let active = true;
+    setLoading(true);
+    setLoadError('');
+    setMessage('');
+
     const fetchClipboard = async () => {
-      const res = await fetch(`/api/search?key=${key}`);
-      const data = await res.json();
-
-      if (res.ok && data.content) {
-        setContent(data.content);  // 数据库中有内容，设置为内容
-      } else if (res.ok && !data.content){
-        setContent('');  // 数据库中有条目，无内容
-      } else {
-        // 数据库中没有，创建一个空条目
-        await fetch('/api/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key, content: '' })
-        });
+      try {
+        let data;
+        try {
+          data = await requestClipboard(`/api/search?key=${encodeURIComponent(key)}`, {
+            signal: controller.signal,
+          });
+        } catch (error) {
+          // 只有明确不存在时才创建；服务异常时不能当作空剪贴板处理。
+          if (!(error instanceof ClipboardRequestError) || error.status !== 404) {
+            throw error;
+          }
+          if (!active) return;
+          data = await requestClipboard('/api/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key, content: '' }),
+            signal: controller.signal,
+          });
+        }
+        if (active) setContent(data.content);
+      } catch (error) {
+        if (active) setLoadError(errorMessage(error));
+      } finally {
+        if (active) setLoading(false);
       }
-
-      setLoading(false);  // 加载完毕
     };
 
     fetchClipboard();
-  }, [key]);
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [key, retryCount]);
 
-  const handleSave = async () => {
-    setMessage('正在保存......'); // 设置保存成功消息
-    // 保存当前内容
-    await fetch('/api/update', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key, content })
-    });
-    setMessage('保存成功！'); // 设置保存成功消息
+  const persistContent = async (nextContent: string, action: '保存' | '清除') => {
+    setSaving(true);
+    setMessage(`正在${action}......`);
+    try {
+      await requestClipboard('/api/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, content: nextContent }),
+      });
+      setContent(nextContent);
+      setMessage(`${action}成功！`);
+    } catch (error) {
+      setMessage(`${action}失败：${errorMessage(error)}`);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleClear = async () => {
-    setMessage('正在清除......'); // 设置消息
-    // 清除内容
-    await fetch('/api/update', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key, content: '' })
-    });
-    setContent('');
-    setMessage('清除成功！'); // 设置成功消息
-  };
+  const handleSave = () => persistContent(content, '保存');
+  const handleClear = () => persistContent('', '清除');
 
   // 复制到剪贴板
   const handleCopy = async () => {
     if (content) {
-      await navigator.clipboard.writeText(content); // 将内容复制到剪贴板
-      setMessage('内容已复制到剪贴板！'); // 设置复制成功消息
+      try {
+        await navigator.clipboard.writeText(content);
+        setMessage('内容已复制到剪贴板！');
+      } catch {
+        setMessage('复制失败，请检查浏览器的剪贴板权限。');
+      }
     } else {
       setMessage('没有内容可以复制。'); // 提示用户内容为空
     }
   };
 
   if (loading) {
-    return <p>加载中...</p>;
+    return <p role="status">加载中...</p>;
+  }
+
+  if (loadError) {
+    return (
+      <div className={styles.container}>
+        <h1 className={styles.title}>剪贴板 - {key}</h1>
+        <p role="alert">加载失败：{loadError}</p>
+        <button className={styles.button} onClick={() => setRetryCount((count) => count + 1)}>
+          重试
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -85,15 +125,17 @@ export default function ClipboardPage({ params }: { params: { key: string } }) {
         rows={10}
         cols={50}
         value={content}
+        aria-label="剪贴板内容"
+        disabled={saving}
         onChange={(e) => setContent(e.target.value)}
         placeholder="在这里输入内容"
       />
       <div className={styles.buttonContainer}>
-        <button className={`${styles.button} ${styles.copyButton}`} onClick={handleCopy}>复制</button>
-        <button className={styles.button} onClick={handleSave}>保存</button>
-        <button className={`${styles.button} ${styles.clearButton}`} onClick={handleClear}>清除</button>
+        <button className={`${styles.button} ${styles.copyButton}`} onClick={handleCopy} disabled={saving}>复制</button>
+        <button className={styles.button} onClick={handleSave} disabled={saving}>保存</button>
+        <button className={`${styles.button} ${styles.clearButton}`} onClick={handleClear} disabled={saving}>清除</button>
       </div>
-      {message && <p style={{ marginTop: '10px', color: '#0070f3' }}>{message}</p>} {/* 显示提示的消息 */}
+      {message && <p role="status" style={{ marginTop: '10px', color: '#0070f3' }}>{message}</p>}
         
         <p style={{ marginTop: '20px', color: '#333' }}>
         很多时候不懂事<span style={{ marginLeft: '10px', color: 'red' }}>❤️</span>
